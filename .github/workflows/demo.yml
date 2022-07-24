@@ -2,7 +2,7 @@ name: demo_ppt
 
 on: 
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: '*/15 * * * *'
   push:
     branches:
       - main
@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: main
     - name: Set Timezone to +7 (With input)
       uses: szenius/set-timezone@v1.0
       with:
