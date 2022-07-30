@@ -1,0 +1,50 @@
+name: daily_ppt_report
+
+on: 
+  schedule:
+    - cron: '*/30 0 * * *'
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      RDS_USER: ${{ secrets.RDS_USER }}
+      RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+      RDS_HOSTNAME: ${{ secrets.RDS_HOSTNAME }}
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: main
+    - name: Set Timezone to +7 (With input)
+      uses: szenius/set-timezone@v1.0
+      with:
+        timezoneLinux: "Asia/Ho_Chi_Minh"
+        timezoneMacos: "Asia/Ho_Chi_Minh"
+        timezoneWindows: "Asia/Ho_Chi_Minh"
+    - name: Set up Python 3.9.13
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9.13
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: extract data from db
+      run: |
+        python get_data.py
+    - name: generate report
+      run: |
+        python gen_ppt.py
+    - name: Save report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: latest report
+        path: output/report.pptx
+        retention-days: 7
+    - name: send email
+      run: |
+        python send_email.py ${{ secrets.GMAIL_USER }} ${{ secrets.GMAIL_PWD }} ${{ secrets.GMAIL_RECIPIENT }} 
